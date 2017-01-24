@@ -1,6 +1,6 @@
 ###TODO: Add country prio to follow up
 
-#opsman2 branch
+###Branch: opsman2
 
 use Win32::OLE;
 use Win32::OLE qw(in with);
@@ -39,8 +39,8 @@ $alert_color = 3;
 $header1_color = 35;
 $header2_color = 36;
 
-$do_completions = "TRUE";
-#$do_completions = "FALSE";
+#$do_completions = "TRUE";
+$do_completions = "FALSE";
 
 #$tm = localtime(time);
 $tm = gmtime(time);
@@ -120,7 +120,8 @@ foreach $sheet (in $Book->worksheets)
       $description = $sheet->Range("C$line")->{Value};
       $country = $sheet->Range("I$line")->{Value};
       
-      if ($bu eq "Spinal" || $bu eq "NV" || $bu =~ /^CV-/ || $bu eq "NEUROMOD" || $bu eq "Cryocath" || $bu eq "AFI" || $bu eq "AFS" || $bu eq "Xomed" || $bu eq "NeuroSurgery" || $bu eq "PSS" || $bu eq "MAE") { $prio = -1; }
+      #Exclude BU's that promote
+      if ($bu eq "Spinal" || $bu eq "NV" || $bu =~ /^CV-/ || $bu eq "NEUROMOD" || $bu eq "Cryocath" || $bu eq "AFI" || $bu eq "AFS" || $bu eq "Xomed" || $bu eq "NeuroSurgery" || $bu eq "PSS" || $bu eq "MAE" || $bu eq "MITG") { $prio = -1; }
 
       elsif ($description =~ /DO NOT PROMOTE/i)
       {
@@ -813,9 +814,11 @@ foreach $sheet (in $Book->worksheets)
         if ($patient_status ne "" && $patient_status ne "Alive" || index($priocountries, $country) != -1) { $prio = 1; }
         else { $prio = 2; }
         
-        #if ($bu eq "NEUROMOD") { $arrayref = \@intake_neuro; }
         if ($bu eq "NV") { $arrayref = \@intake_nv; }
         else { $arrayref = \@intake_others; }
+        
+        #Filter intakes for BU promotion, excluding NeuroMod for tiering, MITG for hypercare and NV for an extra check (esp. on literature events)
+        if ($bu eq "Spinal" || $bu =~ /^CV-/ || $bu eq "Cryocath" || $bu eq "AFI" || $bu eq "AFS" || $bu eq "Xomed" || $bu eq "NeuroSurgery" || $bu eq "PSS" || $bu eq "MAE") { $prio = -1; }
         
         my %intake_record = (
           gch_number => $gch_number,
@@ -844,8 +847,7 @@ foreach $sheet (in $Book->worksheets)
     $intakes_sr_count = 0;
     $intakes_sr_urgent_count = 0;
     
-    #foreach $type ("Intakes", "Intakes Neuro", "Intakes NV")
-    foreach $type ("Intakes", "Intakes NV")
+        foreach $type ("Intakes", "Intakes NV")
     {
       $intakes_sheet->Range("A$w")->{value} = $type;
       $intakes_sheet->Range("A$w")->Interior->{ColorIndex} = 35;
